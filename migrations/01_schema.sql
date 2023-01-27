@@ -1,4 +1,5 @@
 -- database: \c lightbnb;
+-- 4 tables in total, in one file (this file)
 
 DROP TABLE IF EXISTS users, properties, reservations, property_reviews CASCADE;
 
