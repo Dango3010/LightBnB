@@ -1,3 +1,8 @@
+/*If we open the home page of our application localhost:3000, we can see that there are links to login, sign up, and logout (after we've logged in). 
+  When a user clicks a link, an HTTP request is sent to the server. 
+  The request is handled in userRoutes.js, where the functions from database.js are used.
+*/
+
 const database = require('./database');
 const apiRoutes = require('./apiRoutes');
 const userRoutes = require('./userRoutes');
