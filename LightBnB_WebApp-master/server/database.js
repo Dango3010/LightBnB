@@ -104,7 +104,7 @@ exports.getAllReservations = getAllReservations;
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 const getAllProperties = function (options, limit = 10) {
-  console.log('options:', options); //to see what we'll receive
+  console.log('options:', options); //prin out the parameter to see what we'll receive
 
   let queryParam = [];
   let queryString = `
@@ -163,9 +163,22 @@ const getAllProperties = function (options, limit = 10) {
  * @return {Promise<{}>} A promise to the property.
  */
 const addProperty = function (property) {
-  const propertyId = Object.keys(properties).length + 1;
-  property.id = propertyId;
-  properties[propertyId] = property;
-  return Promise.resolve(property);
+  let value = [];
+  let key = [];
+  
+  for(let item in property) {
+    value.push(property[item]);
+    key.push(item);
+  }
+
+  let queryString = `
+  INSERT INTO properties (${key[0]}, ${key[1]}, ${key[2]}, ${key[3]}, ${key[4]}, ${key[5]}, ${key[6]}, ${key[7]}, ${key[8]}, ${key[9]}, ${key[10]}, ${key[11]}, ${key[12]}, ${key[13]})
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+  RETURNING *;
+  `
+
+  console.log(queryString, value);
+
+  return pool.query(queryString, value).then (res => res.rows);
 }
 exports.addProperty = addProperty;
