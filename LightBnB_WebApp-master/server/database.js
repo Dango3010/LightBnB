@@ -104,14 +104,57 @@ exports.getAllReservations = getAllReservations;
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 const getAllProperties = function (options, limit = 10) {
-  //the compass func
-  const limitedProperties = {};
-  for (let i = 1; i <= limit; i++) {
-    limitedProperties[i] = properties[i];
+  console.log('options:', options); //to see what we'll receive
+
+  let queryParam = [];
+  let queryString = `
+  SELECT properties.*, avg(property_reviews.rating) as average_rating
+  FROM properties
+  JOIN property_reviews ON properties.id = property_id
+  WHERE 1 = 1
+  `;
+
+  //if city is filtered
+  if(options.city){
+    queryParam.push(`%${options.city}%`); //the % syntax for the LIKE clause must be part of the parameter, not the query.
+    queryString += ` AND city LIKE $${queryParam.length}`; //the length of the array = the $n placeholder number. 
+  } //add any query that comes after the WHERE clause.
+
+  //if the user already has a listing
+  if(options.owner_id){
+    queryParam.push(Number(options.owner_id));
+    queryString += ` AND owner_id = $${queryParam.length}`;
   }
-  return Promise.resolve(limitedProperties);
+
+  //if the cost is filtered
+  if(options.minimum_price_per_night){
+    queryParam.push(options.minimum_price_per_night*100);
+    queryString += ` AND cost_per_night >= $${queryParam.length}`
+  };
+
+  if(options.maximum_price_per_night){
+    queryParam.push(options.maximum_price_per_night*100);
+    queryString += ` AND cost_per_night <= $${queryParam.length}`
+  };
+
+  //if rating is filtered
+  if(options.minimum_rating){
+    queryParam.push(Number(options.minimum_rating));
+    queryString += ` AND rating >= $${queryParam.length}`;
+  };
+
+  queryParam.push(limit);
+  queryString += `
+  GROUP BY properties.id
+  ORDER BY cost_per_night
+  LIMIT $${queryParam.length};
+  `;
+
+  console.log(queryString, queryParam); //console log everything just to make sure we've done it right.
+
+  return pool.query(queryString, queryParam).then(res => {return res.rows;}); //run the query.
 };
-exports.getAllProperties = getAllProperties;
+  exports.getAllProperties = getAllProperties;
 
 
 /**
