@@ -28,6 +28,6 @@ Filter out places for your own comfort:
 - Pg
 
 ## Getting Started
-
+- create tables in your database by running 01_schema.sql file (in migrations folder), and insert rows into the tables by running 01_seeds.sql and 02_seeds.sql files (in seeds folder)
 - Install all dependencies (using the `npm install` command).
 - Run the development web server using the `npm run local` command.
