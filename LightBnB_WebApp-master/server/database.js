@@ -62,7 +62,7 @@ const addUser = function (user) {
     RETURNING *;`, //to return the object that was just inserted.
       [user.name, user.email, user.password])
     .then(res => {
-      return res;
+      return res.rows[0];
     }) //return the new user object, its id should appear as well
     .catch(err => console.log(err.message));
 }
@@ -78,17 +78,15 @@ exports.addUser = addUser;
 const getAllReservations = function (guest_id, limit) {
   return pool
     .query(`
-    SELECT reservations.*, properties.* 
+    SELECT reservations.*, properties.*, avg(property_reviews.rating) as average_rating
     FROM reservations
-    JOIN users ON guest_id = users.id
     JOIN properties ON properties.id = reservations.property_id
     JOIN property_reviews ON properties.id = property_reviews.property_id
     WHERE reservations.guest_id = $1
+    GROUP BY reservations.id, properties.id
     LIMIT $2;
     `, [guest_id, limit])
     .then(result => {
-      console.log('input:', guest_id, limit);
-      console.log('result.length:', result.rows.length);
       return result.rows;
     })
     .catch(err => console.log(err.message));
@@ -139,7 +137,7 @@ const getAllProperties = function (options, limit) {
 
   queryString += `
   GROUP BY properties.id
-  `;
+  `; //the query requires a GROUP BY since we wanna create the average(rating) column
 
   //if rating is filtered
   if (options.minimum_rating) {
@@ -170,15 +168,26 @@ exports.getAllProperties = getAllProperties;
 const addProperty = function (property) {
   let value = [];
   let key = [];
+  let valueHolder = [];
+  let index = 1;
 
   for (let item in property) {
-    value.push(property[item]);
     key.push(item);
+    if (item === 'cost_per_night') {
+      value.push(property[item]*100);
+    } else {
+      value.push(property[item]);
+    }
+    valueHolder.push(`$${index}`);
+    index += 1;
   }
+  
+  let keyString = key.join(', ');
+  let valueString = valueHolder.join(', ');
 
   let queryString = `
-  INSERT INTO properties (${key[0]}, ${key[1]}, ${key[2]}, ${key[3]}, ${key[4]}, ${key[5]}, ${key[6]}, ${key[7]}, ${key[8]}, ${key[9]}, ${key[10]}, ${key[11]}, ${key[12]}, ${key[13]})
-  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+  INSERT INTO properties (${keyString})
+  VALUES (${valueString})
   RETURNING *;
   `;
 
